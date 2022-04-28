@@ -1,6 +1,7 @@
 import torch
 import torch.nn as nn
 
+
 class ContrastiveLoss(torch.nn.Module):
 
     def __init__(self, margin=2.0):
@@ -9,8 +10,8 @@ class ContrastiveLoss(torch.nn.Module):
 
     def forward(self, output1, output2, label):
         euclidean_distance = F.pairwise_distance(output1.unsqueeze(0), output2.unsqueeze(0))
-        loss_contrastive = torch.mean((1-label) * torch.pow(euclidean_distance, 2) +
-                                      (label) * torch.pow(torch.clamp(self.margin - euclidean_distance, min=0.0), 2))
+        loss_contrastive = torch.mean((1 - label) * torch.pow(euclidean_distance, 2) +
+                                      label * torch.pow(torch.clamp(self.margin - euclidean_distance, min=0.0), 2))
         return loss_contrastive
 
 
@@ -30,7 +31,7 @@ class Similarity(torch.nn.Module):
 
 class InfoNCELoss(torch.nn.Module):
     """
-    An unofficial implementaion of InfoNCELoss
+    An unofficial implementation of InfoNCELoss
     By Mario 2022.04
     """
 

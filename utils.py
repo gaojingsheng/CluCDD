@@ -11,9 +11,9 @@ from tqdm import tqdm
 from ortools.graph import pywrapgraph
 
 
-def readdata(datapath, mode="train"):
+def read_data(data_path, mode="train"):
     print("Tokenizing sentence and word...")
-    with open(datapath) as fin:
+    with open(data_path) as fin:
         content = json.load(fin)
     print("{} {} data examples read.".format(len(content), mode))
     all_utterances = []
@@ -31,9 +31,9 @@ def readdata(datapath, mode="train"):
     return all_utterances, labels
 
 
-def readdata2(datapath, mode="train"):
+def read_data2(data_path, mode="train"):
     print("Tokenizing sentence and word...")
-    with open(datapath) as fin:
+    with open(data_path) as fin:
         content = json.load(fin)
     print("{} {} data examples read.".format(len(content), mode))
     all_utterances = []
@@ -77,9 +77,9 @@ def calculate_shen_f_score(y_true, y_pred):
     y_pred_cnt = dict(Counter(y_pred))
     y_pred_dict = dict()
     for i, val in enumerate(y_pred):
-        if y_pred_dict.get(val, None) == None:
+        if y_pred_dict.get(val, None) is None:
             y_pred_dict[val] = dict()
-        if y_pred_dict[val].get(y_true[i], None) == None:
+        if y_pred_dict[val].get(y_true[i], None) is None:
             y_pred_dict[val][y_true[i]] = 0
         y_pred_dict[val][y_true[i]] += 1
     shen_f_score = 0.
@@ -197,7 +197,7 @@ def one_to_one(y_true, y_pred):
 
     # Score.
     total_count = sum(v for v in row_sums)
-    overlap = 0
+    over_lap = 0
     for arc in range(min_cost_flow.NumArcs()):
         # Can ignore arcs leading out of source or into sink.
         if min_cost_flow.Tail(arc) != source and min_cost_flow.Head(arc) != sink:
@@ -209,8 +209,8 @@ def one_to_one(y_true, y_pred):
                 col = num_to_col[col_num - len(num_to_row)]
                 row = num_to_row[row_num]
                 if col in contingency[row]:
-                    overlap += contingency[row][col]
-    print("{:5.2f}   one-to-one".format(overlap * 100 / total_count))
+                    over_lap += contingency[row][col]
+    print("{:5.2f}   one-to-one".format(over_lap * 100 / total_count))
 
 
 def overlap(y_true, y_pred, index_true, index_pred):

@@ -15,52 +15,58 @@ from sklearn.metrics.cluster import normalized_mutual_info_score
 from sklearn.cluster import KMeans, AffinityPropagation, DBSCAN
 from sklearn.mixture import GaussianMixture
 
+
 class RelationModel(nn.Module):
     def __init__(self, args, bert_model, hidden_size=768, n_layers=1, bidirectional=False, dropout=0):
+        """
+        @type bert_model: object
+        @type args: Model and training parameters
+        """
         super(RelationModel, self).__init__()
 
         self.args = args
         self.bert = bert_model
-        self.lstm = nn.LSTM(hidden_size, hidden_size, n_layers, batch_first=True, \
-                                        bidirectional=bidirectional, dropout=dropout)
+        self.lstm = nn.LSTM(hidden_size, hidden_size, n_layers, batch_first=True,
+                            bidirectional=bidirectional, dropout=dropout)
 
         self.dense = nn.Linear(hidden_size, hidden_size)
 
         self.linear = nn.Sequential(
-            nn.Linear(hidden_size, hidden_size), 
+            nn.Linear(hidden_size, hidden_size),
             nn.ReLU()
         )
         # self.bn = nn.BatchNorm1d(hidden_size, affine=False)
-        
+
         self.freeze_parameters(self.bert)
 
-    def freeze_parameters(self,model):
-        for name, param in model.named_parameters():  
+    @staticmethod
+    def freeze_parameters(model):
+        for name, param in model.named_parameters():
             param.requires_grad = False
             if "encoder.layer.11" in name or "pooler" in name:
                 param.requires_grad = True
 
-
     def forward(self, inputs, mask):
         if self.args.mean_pooling:
             encoded_layer_12 = self.bert(**inputs, output_hidden_states=True, return_dict=True).last_hidden_state
-            embeddings = self.dense(encoded_layer_12.mean(dim = 1))
-        else:        
+            embeddings = self.dense(encoded_layer_12.mean(dim=1))
+        else:
             # pooled_output = self.bert(**inputs, return_dict=True).pooler_output
             embeddings = self.bert(**inputs, return_dict=True).last_hidden_state[0]
 
-        conversation_feats = embeddings.view(mask.size(0), -1, embeddings.size(-1)) 
+        conversation_feats = embeddings.view(mask.size(0), -1, embeddings.size(-1))
         if self.args.uselstm:
             conversation_feats, _ = self.lstm(conversation_feats)
 
         linear_feats = self.linear(conversation_feats)
 
         if self.args.ln:
-            # linear_feats = linear_feats*mask.unsqueeze(2)
+            #  linear_feats = linear_feats*mask.unsqueeze(2)
             norm_feats = F.normalize(linear_feats, p=2, dim=2)
             return linear_feats
         else:
             return conversation_feats
+
 
 class Trainer(object):
     def __init__(self, args, model, logger):
@@ -69,34 +75,36 @@ class Trainer(object):
         self.logger = logger
         self.num_labels = args.num_labels
 
-    def evaluate(self, test_loader, epoch=0, mode="dev", first_time = False):
+    def evaluate(self, test_loader, epoch=0, mode="dev", first_time=False):
         predicted_labels = []
         truth_labels = []
         self.model.eval()
         with torch.no_grad():
-            for i,batch in tqdm(enumerate(test_loader)):
+            for i, batch in tqdm(enumerate(test_loader)):
                 if i == 10:
                     break
                 padded_conversations, labels, mask = batch
                 inputs = self.args.tokenizer(padded_conversations, padding=True, truncation=True, return_tensors="pt")
                 for things in inputs:
-                    inputs[things] = inputs[things][:,:self.args.crop_num].cuda()
+                    inputs[things] = inputs[things][:, :self.args.crop_num].cuda()
                 mask = mask.cuda()
                 output_feats = self.model(inputs, mask)
                 for i in range(len(labels)):
                     batch_con_length = torch.sum(mask[i])
                     if self.args.methods == "kmeans":
-                        km = KMeans(n_clusters = self.num_labels).fit(output_feats[i][:batch_con_length].detach().cpu().numpy())
-                        pseudo_labels =  km.labels_
+                        km = KMeans(n_clusters=self.num_labels).fit(
+                            output_feats[i][:batch_con_length].detach().cpu().numpy())
+                        pseudo_labels = km.labels_
                     elif self.args.methods == "ap":
                         af = AffinityPropagation().fit(output_feats[i][:batch_con_length].detach().cpu().numpy())
-                        pseudo_labels =  af.labels_
+                        pseudo_labels = af.labels_
                     elif self.args.methods == "dbscan":
                         db = DBSCAN(eps=1, min_samples=1).fit(output_feats[i][:batch_con_length].detach().cpu().numpy())
-                        pseudo_labels =  db.labels_
+                        pseudo_labels = db.labels_
                     elif self.args.methods == "gauss":
-                        gm = GaussianMixture(n_components = self.num_labels).fit(output_feats[i][:batch_con_length].detach().cpu().numpy())
-                        pseudo_labels =  gm.predict(output_feats[i][:batch_con_length].detach().cpu().numpy())
+                        gm = GaussianMixture(n_components=self.num_labels).fit(
+                            output_feats[i][:batch_con_length].detach().cpu().numpy())
+                        pseudo_labels = gm.predict(output_feats[i][:batch_con_length].detach().cpu().numpy())
                     predicted_labels.append(pseudo_labels)
                     print(pseudo_labels)
                     truth_labels.append(labels[i])
@@ -108,26 +116,28 @@ class Trainer(object):
         loc3_score = utils.compare(predicted_labels, truth_labels, 'Loc3')
         one2one_score = utils.compare(predicted_labels, truth_labels, 'one2one')
         log_msg = "purity_score: {}, nmi_score: {}, ari_score: {}, shen_f_score: {}, loc3_score: {}, one2one_score: {}".format(
-                        round(purity_score, 4), round(nmi_score, 4), round(ari_score, 4), round(shen_f_score, 4), round(loc3_score, 4), round(one2one_score, 4))
+            round(purity_score, 4), round(nmi_score, 4), round(ari_score, 4), round(shen_f_score, 4),
+            round(loc3_score, 4), round(one2one_score, 4))
         self.logger.info(log_msg)
+
 
 class TrainDataLoader(object):
     def __init__(self, args, all_utterances, labels, name='train'):
         self.batch_size = args.batch_size
 
-        self.all_utterances_batch = [all_utterances[i:i+self.batch_size] \
-                                    for i in range(0, len(all_utterances), self.batch_size)]
-        self.labels_batch = [labels[i:i+self.batch_size] \
-                            for i in range(0, len(labels), self.batch_size)]
+        self.all_utterances_batch = [all_utterances[i:i + self.batch_size] \
+                                     for i in range(0, len(all_utterances), self.batch_size)]
+        self.labels_batch = [labels[i:i + self.batch_size] \
+                             for i in range(0, len(labels), self.batch_size)]
 
-        print("labels_batch",len(self.labels_batch))
+        print("labels_batch", len(self.labels_batch))
         assert len(self.all_utterances_batch) == len(self.labels_batch)
-                               
+
         self.batch_num = len(self.all_utterances_batch)
         print("{} batches created in {} set.".format(self.batch_num, name))
-        
+
         self.padding_sentence = "This is a padding sentence: bala bala bala123!"
-    
+
     def __len__(self):
         return self.batch_num
 
@@ -139,7 +149,7 @@ class TrainDataLoader(object):
             for j in range(len(utterances[i])):
                 if len(utterances[i][j]) > 600:
                     utterances[i][j] = utterances[i][j][:600]
-            temp = utterances[i] + [self.padding_sentence]*(max_conversation_length-conversations_length[i])
+            temp = utterances[i] + [self.padding_sentence] * (max_conversation_length - conversations_length[i])
             padded_conversations.extend(temp)
         return padded_conversations, conversations_length, max_conversation_length
 
@@ -151,11 +161,13 @@ class TrainDataLoader(object):
 
         utterances = self.all_utterances_batch[key]
         labels = self.labels_batch[key]
-        padded_conversations, conversations_length, max_conversation_length = self.padding_conversation(utterances, labels)
+        padded_conversations, conversations_length, max_conversation_length = self.padding_conversation(utterances,
+                                                                                                        labels)
         mask = torch.arange(max_conversation_length).expand(len(conversations_length), max_conversation_length) \
-                                < torch.Tensor(conversations_length).unsqueeze(1)
+               < torch.Tensor(conversations_length).unsqueeze(1)
         # padded_conversations: NC * sentences
         return padded_conversations, labels, mask
+
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser()
@@ -171,10 +183,9 @@ if __name__ == "__main__":
 
     parser.add_argument('--device', type=str, default='0')
 
-    args = parser.parse_args() 
+    args = parser.parse_args()
 
     os.environ['CUDA_VISIBLE_DEVICES'] = args.device
-
 
     # all_utterances, labels = utils.readdata(datapath="dataset/entangled_train.json", mode='train')
     dev_utterances, dev_labels = utils.ReadData(datapath="dataset/entangled_dev.json", mode='dev')
