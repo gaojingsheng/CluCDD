@@ -1,0 +1,384 @@
+import torch
+import torch.nn as nn
+import torch.nn.functional as F
+from transformers import AutoModel, AutoTokenizer
+import numpy as np
+import os
+import random
+import logging
+import utils
+from utils import calculate_purity_scores, calculate_shen_f_score
+from sklearn.metrics import adjusted_rand_score
+from sklearn.metrics.cluster import normalized_mutual_info_score
+from sklearn.cluster import KMeans
+from tqdm import tqdm
+import copy
+import argparse
+import json
+from torch.utils.tensorboard import SummaryWriter
+
+
+
+class RelationModel(nn.Module):
+    def __init__(self, args, bert_model, hidden_size=768, n_layers=1, bidirectional=False, dropout=0):
+        super(RelationModel, self).__init__()
+
+        self.args = args
+        self.bert = bert_model
+        self.lstm = nn.LSTM(hidden_size, hidden_size, n_layers, batch_first=True, \
+                                        bidirectional=bidirectional, dropout=dropout)
+
+        self.dense = nn.Linear(hidden_size, hidden_size)
+
+        self.linear = nn.Sequential(
+            nn.Linear(hidden_size, hidden_size), 
+            nn.ReLU()
+        )
+        # self.bn = nn.BatchNorm1d(hidden_size, affine=False)
+
+        self.freeze_parameters(self.bert)
+
+    def freeze_parameters(self,model):
+        for name, param in model.named_parameters():  
+            param.requires_grad = False
+            if "encoder.layer.11" in name or "pooler" in name:
+                param.requires_grad = True
+    
+    def attention_score(self, input_feats, T=0.5):
+        # input_feat: N*C*768
+        new_feats = input_feats.transpose(1,2)
+        matrix = torch.exp(torch.matmul(input_feats, new_feats)*T)
+        new_matrix = torch.zeros_like(matrix).cuda()
+        for i in range(input_feats.size(0)):
+            for j in range(input_feats.size(1)):
+                new_matrix[i][j] = matrix[i][j]/torch.sum(matrix[i][j])
+        return new_matrix
+
+    def forward(self, inputs, mask):
+        if self.args.mean_pooling:
+            encoded_layer_12 = self.bert(**inputs, output_hidden_states=True, return_dict=True).last_hidden_state
+            embeddings = self.dense(encoded_layer_12.mean(dim = 1))
+        else:        
+            # pooled_output = self.bert(**inputs, return_dict=True).pooler_output
+            embeddings = self.bert(**inputs, return_dict=True).last_hidden_state[0]
+
+        conversation_feats = embeddings.view(mask.size(0), -1, embeddings.size(-1)) 
+        if self.args.uselstm:
+            conversation_feats, _ = self.lstm(conversation_feats)
+
+        linear_feats = self.linear(conversation_feats)
+
+        if self.args.ln:
+            # linear_feats = linear_feats*mask.unsqueeze(2)
+            norm_feats = F.normalize(linear_feats, p=2, dim=2)
+            return linear_feats
+        else:
+            return conversation_feats
+
+class TrainDataLoader(object):
+    def __init__(self, args, all_utterances, labels, name='train'):
+        self.batch_size = args.batch_size
+
+        self.all_utterances_batch = [all_utterances[i:i+self.batch_size] \
+                                    for i in range(0, len(all_utterances), self.batch_size)]
+        self.labels_batch = [labels[i:i+self.batch_size] \
+                            for i in range(0, len(labels), self.batch_size)]
+
+        print("labels_batch",len(self.labels_batch))
+        assert len(self.all_utterances_batch) == len(self.labels_batch)
+                               
+        self.batch_num = len(self.all_utterances_batch)
+        print("{} batches created in {} set.".format(self.batch_num, name))
+        
+        self.padding_sentence = "This is a padding sentence: bala bala bala123!"
+    
+    def __len__(self):
+        return self.batch_num
+
+    def padding_conversation(self, utterances, labels):
+        conversations_length = [len(x) for x in utterances]
+        max_conversation_length = max(conversations_length)
+        padded_conversations = []
+        for i in range(len(conversations_length)):
+            for j in range(len(utterances[i])):
+                if len(utterances[i][j]) > 600:
+                    utterances[i][j] = utterances[i][j][:600]
+            temp = utterances[i] + [self.padding_sentence]*(max_conversation_length-conversations_length[i])
+            padded_conversations.extend(temp)
+        return padded_conversations, conversations_length, max_conversation_length
+
+    def __getitem__(self, key):
+        if not isinstance(key, int):
+            raise TypeError
+        if key < 0 or key >= self.batch_num:
+            raise IndexError
+
+        utterances = self.all_utterances_batch[key]
+        labels = self.labels_batch[key]
+        padded_conversations, conversations_length, max_conversation_length = self.padding_conversation(utterances, labels)
+        mask = torch.arange(max_conversation_length).expand(len(conversations_length), max_conversation_length) \
+                                < torch.Tensor(conversations_length).unsqueeze(1)
+        # padded_conversations: NC * sentences
+        return padded_conversations, labels, mask
+
+
+class ContrastiveLoss(torch.nn.Module):
+    def __init__(self, margin=2.0):
+        super(ContrastiveLoss, self).__init__()
+        self.margin = margin
+
+    def forward(self, output1, output2, label):
+        euclidean_distance = F.pairwise_distance(output1.unsqueeze(0), output2.unsqueeze(0))
+ 
+        loss_contrastive = torch.mean((1-label) * torch.pow(euclidean_distance, 2) +
+                                      (label) * torch.pow(torch.clamp(self.margin - euclidean_distance, min=0.0), 2))
+        return loss_contrastive
+
+class Similarity(nn.Module):
+    """
+    Dot product or cosine similarity
+    """
+
+    def __init__(self, temp):
+        super().__init__()
+        self.temp = temp
+        self.cos = nn.CosineSimilarity(dim=-1, eps=1e-6)
+
+    def forward(self, x, y):
+        return self.cos(x, y) / self.temp
+
+class InfoNCELoss(torch.nn.Module):
+    """
+    An unofficial implementaion of InfoNCELoss
+    By Mario 2022.04
+    """
+
+    def __init__(self, temp):
+        super().__init__()
+        self.sim = Similarity(temp=temp)
+
+    def forward(self, anchor, positive, negative):
+        eps = 1e-6
+        negative_sim_sum = torch.zeros([1],dtype=torch.float).cuda()
+        for i in range(negative.size(0)):
+            negative_sim_sum += self.sim(anchor, negative[i])
+
+        return -torch.log(torch.exp(self.sim(anchor, positive))/torch.exp(negative_sim_sum)+eps)
+
+def NormEmbedding(repre):
+    """
+    Normalization before cos similarity clustering
+    """
+
+    eps = 1e-6
+    nm = np.sqrt((repre**2).sum(axis=1))[:,None]
+    return repre/(nm+eps)
+
+class Trainer(object):
+    def __init__(self, args, model, logger, all_utterances):
+        self.args = args
+        self.model = model
+        self.logger = logger
+        self.loss_fn = ContrastiveLoss(margin=self.args.margin)
+        self.info_loss = InfoNCELoss(temp=self.args.temp)
+
+        self.utterances = all_utterances
+        params = list(self.model.parameters())
+        self.optimizer = torch.optim.Adam(params, lr=args.learning_rate)
+        self.device = "cuda" if torch.cuda.is_available() else "cpu"
+        self.num_labels = args.num_labels
+        self.epoch_num = args.epoch_num
+
+    def evaluate(self, test_loader, epoch=0, mode="dev", first_time = False):
+        predicted_labels = []
+        truth_labels = []
+        self.model.eval()
+        with torch.no_grad():
+            for batch in tqdm(test_loader):
+                padded_conversations, labels, mask = batch
+                inputs = self.args.tokenizer(padded_conversations, padding=True, truncation=True, return_tensors="pt")
+                for things in inputs:
+                    inputs[things] = inputs[things][:,:self.args.crop_num].cuda()
+                mask = mask.cuda()
+                if first_time:
+                    embeddings = self.model.bert(**inputs, return_dict=True).pooler_output
+                    conversation_feats = embeddings.view(mask.size(0), -1, embeddings.size(-1)) 
+                    linear_feats = conversation_feats*mask.unsqueeze(2)
+                    output_feats = F.normalize(linear_feats, p=2, dim=2)
+                    # sim_matrix = self.model.attention_score(norm_feats, T=0.5)
+                    # output = torch.matmul(sim_matrix, norm_feats)
+                    # output_feats = torch.cat((norm_feats, output), dim=-1)
+                else:
+                    output_feats = self.model(inputs, mask)
+
+                for i in range(len(labels)):
+                    batch_con_length = torch.sum(mask[i])
+                    clustering_array = output_feats[i][:batch_con_length].detach().cpu().numpy()
+                    norm_clustering_array = NormEmbedding(clustering_array)
+                    # print(clustering_array)
+                    km = KMeans(n_clusters = self.num_labels).fit(clustering_array)
+                    pseudo_labels =  km.labels_
+                    predicted_labels.append(pseudo_labels)
+                    truth_labels.append(labels[i])
+
+        purity_score = utils.compare(predicted_labels, truth_labels, 'purity')
+        nmi_score = utils.compare(predicted_labels, truth_labels, 'NMI')
+        ari_score = utils.compare(predicted_labels, truth_labels, 'ARI')
+        shen_f_score = utils.compare(predicted_labels, truth_labels, 'shen_f')
+        loc3_score = utils.compare(predicted_labels, truth_labels, 'Loc3')
+        log_msg = "purity_score: {}, nmi_score: {}, ari_score: {}, shen_f_score: {}, loc3_score: {}".format(
+                        round(purity_score, 4), round(nmi_score, 4), round(ari_score, 4), round(shen_f_score, 4), round(loc3_score, 4))
+        self.logger.info(log_msg)
+        return
+
+    def train(self, train_loader, dev_loader):
+        writer = SummaryWriter('runs/'+self.args.savename)
+        step_cnt = 0 
+        # self.evaluate(dev_loader, first_time=True)
+        # self.evaluate(dev_loader)
+        # train_loader = self.evaluate(train_loader, mode="train", first_time=True)
+        self.model.train()
+        for epoch in tqdm(range(self.epoch_num)):
+            epoch_loss = 0
+            for i, batch in enumerate(tqdm(train_loader)):
+                if i*self.args.batch_size > self.args.samples_num:
+                    break
+
+                step_cnt += 1
+                padded_conversations, labels, mask = batch
+                inputs = self.args.tokenizer(padded_conversations, padding=True, truncation=True, return_tensors="pt")
+                for things in inputs:
+                    inputs[things] = inputs[things][:,:self.args.crop_num].cuda()
+                mask = mask.cuda()
+                output = self.model(inputs, mask)
+                """
+                loss = torch.zeros(1, dtype=torch.float32).to(self.device)
+                for batch in range(len(labels)):
+                    train_labels = labels[batch]
+                    for m in range(len(train_labels)-1):
+                        for n in range(m+1, len(train_labels)):
+                            loss += self.loss_fn(output[batch][m], output[batch][n], train_labels[m]!=train_labels[n])
+                loss = loss/((len(train_labels)-1)**2*self.args.batch_size)
+                """
+                loss = torch.zeros(1, dtype=torch.float32).to(self.device)
+                loss_num = 0
+                for batch in range(len(labels)):
+                    train_labels = labels[batch]
+                    for m in range(len(train_labels)-1):
+                        for n in range(m+1, len(train_labels)):
+                            if train_labels[m] == train_labels[n]:
+                                loss += self.info_loss(output[batch][m],output[batch][n],output[batch][torch.arange(output.size(1))!=m])
+                                loss_num += 1
+                loss = loss/loss_num
+                writer.add_scalar('loss', loss.data.item(), global_step=step_cnt)
+                log_msg = "Epoch : {}, batch: {}/{}, step: {},loss: {}".format(epoch, i, len(train_loader), step_cnt, round(loss.data.item(), 4))
+                self.logger.info(log_msg)
+                epoch_loss += loss.data.item()
+                self.optimizer.zero_grad()
+                loss.backward()
+                self.optimizer.step()
+                if self.args.dataset == "dialogue":
+                    if step_cnt % 10 == 0 and epoch == 0:
+                        # self.evaluate(dev_loader, first_time=True)
+                        self.evaluate(dev_loader)
+                        self.model.train()
+                    elif step_cnt % 1000 == 0:
+                        self.evaluate(dev_loader)
+                        self.model.train()
+                        model_name = os.path.join(self.args.save_model_path, "model_{}".format(self.args.savename), "step_{}.pkl".format(step_cnt))
+                        torch.save(self.model.state_dict(), model_name)
+                elif self.args.dataset == "irc":
+                    if step_cnt % 30 == 0 and epoch == 0:
+                        # self.evaluate(dev_loader, first_time=True)
+                        self.evaluate(dev_loader)
+                        self.model.train()
+                    elif step_cnt % 300 == 0:
+                        self.evaluate(dev_loader)
+                        self.model.train()
+                        model_name = os.path.join(self.args.save_model_path, "model_{}".format(self.args.savename), "step_{}.pkl".format(step_cnt))
+                        torch.save(self.model.state_dict(), model_name)
+            log_msg = "Epoch average loss is: {}".format(round(epoch_loss/len(train_loader), 4))
+            self.logger.info(log_msg)
+            
+            
+if __name__ == "__main__":
+    parser = argparse.ArgumentParser()
+    parser.add_argument('--num_labels', type=int, default=4)
+    parser.add_argument('--temp', type=int, default=1)
+    parser.add_argument('--margin', type=float, default=2.0)
+    parser.add_argument('--batch_size', type=int, default=8)
+    parser.add_argument('--epoch_num', type=int, default=10)
+    parser.add_argument('--crop_num', type=int, default=60)
+    parser.add_argument('--samples_num', type=int, default=30000)
+    parser.add_argument('--learning_rate', type=float, default=5e-4)
+    parser.add_argument('--uselstm', action='store_true')
+    parser.add_argument('--mean_pooling', action='store_true')
+    parser.add_argument('--ln', action='store_true')
+    # parser.add_argument('--use_labels', action='store_true')
+    parser.add_argument('--berttype', type=str, default='bert', help="bert, simcse")
+    
+    parser.add_argument('--dataset', type=str, default='dialogue')
+    parser.add_argument('--save_model_path', type=str, default="./EMNLP/Model")
+
+    parser.add_argument('--device', type=str, default='0')
+
+    args = parser.parse_args() 
+
+    os.environ['CUDA_VISIBLE_DEVICES'] = args.device
+    SEED = random.randint(1,100)
+    torch.manual_seed(SEED)
+    torch.cuda.manual_seed(SEED)
+    savename = "UDC-Net_"
+    savename += str(args.temp)
+    if args.dataset == "dialogue":
+        all_utterances, labels = utils.readdata(datapath="dataset/entangled_train.json", mode='train')
+        dev_utterances, dev_labels = utils.readdata(datapath="dataset/entangled_dev.json", mode='dev')
+    elif args.dataset == "irc":
+        savename += "_IRC"
+        args.num_labels = 14
+        all_utterances, labels = utils.readdata(datapath="dataset/irc_dialogue/irc50_train_delete.json", mode='train')
+        dev_utterances, dev_labels = utils.readdata(datapath="dataset/irc_dialogue/irc50_dev_delete.json", mode='dev')
+    else:
+        raise ValueError("Dataset type must be dialogue or irc.")
+
+    if args.berttype == "simcse":
+        savename += "_SimCSE"
+        args.tokenizer = AutoTokenizer.from_pretrained("princeton-nlp/sup-simcse-bert-base-uncased")
+        bert_model = AutoModel.from_pretrained("princeton-nlp/sup-simcse-bert-base-uncased")
+    elif args.berttype == "bert":
+        savename += "_Bert"
+        args.tokenizer = AutoTokenizer.from_pretrained("bert-base-uncased")
+        bert_model = AutoModel.from_pretrained("bert-base-uncased")
+    else:
+        raise ValueError("Input bert type must be bert or simcse.")
+    
+    train_loader = TrainDataLoader(args, all_utterances, labels)
+    dev_loader = TrainDataLoader(args, dev_utterances, dev_labels, name="dev")
+    savename += ("_Margin" + str(args.margin))
+    savename += str(args.num_labels)
+    savename += ("_"+str(args.samples_num))
+    args.savename = savename
+    if args.ln:
+        savename += "_LN"
+    if args.uselstm:
+        savename += "_LSTM"
+    if args.mean_pooling:
+        savename += "_Pool"
+    # if args.use_labels:
+    #     savename += "_Labels"
+
+    logger_name = os.path.join("./EMNLP/ConLog", "{}.txt".format(savename))
+    LOG_FORMAT = '%(asctime)s %(name)-12s %(levelname)-8s %(message)s'
+    logging.basicConfig(format=LOG_FORMAT, level=logging.INFO, filename=logger_name, filemode='w')
+    logger = logging.getLogger()
+
+    log_head = "Learning Rate: {}; Random Seed: {}; Clustering Number: {}; ".format(args.learning_rate, SEED, args.num_labels)
+    logger.info(log_head)
+    model_name = os.path.join(args.save_model_path, "model_{}".format(args.savename))
+    if not os.path.exists(model_name):
+        os.makedirs(model_name)
+        
+    model = RelationModel(args, bert_model, hidden_size=768).cuda()
+    trainer = Trainer(args, model, logger, all_utterances)
+
+    trainer.train(train_loader, dev_loader)
