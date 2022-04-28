@@ -257,8 +257,10 @@ if __name__ == "__main__":
     torch.cuda.manual_seed(SEED)
     savename = "DCC-Net_"
 
-    all_utterances, labels = utils.readdata(datapath="dataset/splited/entangled{}_train.json".format(args.num_labels), mode='train')
-    dev_utterances, dev_labels = utils.readdata(datapath="dataset/splited/entangled{}_dev.json".format(args.num_labels), mode='dev')
+    all_utterances, labels = utils.ReadData(datapath="dataset/splited/entangled{}_train.json".format(args.num_labels),
+                                            mode='train')
+    dev_utterances, dev_labels = utils.ReadData(datapath="dataset/splited/entangled{}_dev.json".format(args.num_labels),
+                                                mode='dev')
 
 
     if args.berttype == "simcse":

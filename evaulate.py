@@ -177,7 +177,7 @@ if __name__ == "__main__":
 
 
     # all_utterances, labels = utils.readdata(datapath="dataset/entangled_train.json", mode='train')
-    dev_utterances, dev_labels = utils.readdata(datapath="dataset/entangled_dev.json", mode='dev')
+    dev_utterances, dev_labels = utils.ReadData(datapath="dataset/entangled_dev.json", mode='dev')
 
     args.tokenizer = AutoTokenizer.from_pretrained("bert-base-uncased")
     bert_model = AutoModel.from_pretrained("bert-base-uncased")

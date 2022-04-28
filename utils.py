@@ -2,7 +2,7 @@ import torch
 import json
 import os
 import sys
-import numpy as np 
+import numpy as np
 import pickle
 from collections import Counter
 from sklearn import metrics
@@ -10,7 +10,8 @@ from sklearn.metrics.cluster import normalized_mutual_info_score
 from tqdm import tqdm
 from ortools.graph import pywrapgraph
 
-def readdata(datapath, mode = "train"):
+
+def readdata(datapath, mode="train"):
     print("Tokenizing sentence and word...")
     with open(datapath) as fin:
         content = json.load(fin)
@@ -29,7 +30,8 @@ def readdata(datapath, mode = "train"):
         labels.append(label_list)
     return all_utterances, labels
 
-def readdata2(datapath, mode = "train"):
+
+def readdata2(datapath, mode="train"):
     print("Tokenizing sentence and word...")
     with open(datapath) as fin:
         content = json.load(fin)
@@ -53,11 +55,12 @@ def readdata2(datapath, mode = "train"):
         speakers.append(speaker_list)
     return all_utterances, labels, speakers
 
+
 def calculate_purity_scores(y_true, y_pred):
     # compute contingency matrix (also called confusion matrix)
     contingency_matrix = metrics.cluster.contingency_matrix(y_true, y_pred)
     # return purity
-    return np.sum(np.amax(contingency_matrix, axis=0)) / np.sum(contingency_matrix) 
+    return np.sum(np.amax(contingency_matrix, axis=0)) / np.sum(contingency_matrix)
 
 
 def calculate_shen_f_score(y_true, y_pred):
@@ -69,7 +72,7 @@ def calculate_shen_f_score(y_true, y_pred):
         else:
             f_score = 2 * recall * precision / (recall + precision)
         return f_score
-    
+
     y_true_cnt = dict(Counter(y_true))
     y_pred_cnt = dict(Counter(y_pred))
     y_pred_dict = dict()
@@ -87,16 +90,17 @@ def calculate_shen_f_score(y_true, y_pred):
         shen_f_score += max(f_list) * y_true_cnt[i] / len(y_true)
     return shen_f_score
 
-def elsner_local_error(y_true, y_pred, window=3):# loc3
+
+def elsner_local_error(y_true, y_pred, window=3):  # loc3
     match = 0
     total = 0
-    anums, gnums = {},{}
+    anums, gnums = {}, {}
     for i in range(len(y_true)):
         anums[i] = y_true[i]
         gnums[i] = y_pred[i]
         start = 0
         end = max(len(y_true), len(y_pred)) + 1
-    for num in range(start,end):
+    for num in range(start, end):
         if num in anums and num in gnums:
             for i in range(-window, 0):
                 pos = num + i
@@ -106,17 +110,18 @@ def elsner_local_error(y_true, y_pred, window=3):# loc3
                     total += 1
     return match / total
 
+
 def clusters_to_contingency(y_true, y_pred):
     # A table, in the form of:
     # https://en.wikipedia.org/wiki/Rand_index#The_contingency_table
-    max_x = max(y_true)+1
-    max_y = max(y_pred)+1
+    max_x = max(y_true) + 1
+    max_y = max(y_pred) + 1
     table = np.zeros((max_x, max_y), dtype=int)
     # print(table)
 
     for i in range(len(y_true)):
         # print(y_pred[i])
-        table[y_true[i]][y_pred[i]] = table[y_true[i]][y_pred[i]]+1
+        table[y_true[i]][y_pred[i]] = table[y_true[i]][y_pred[i]] + 1
         # print(table)
     print(table)
     counts_a, counts_g = [], []
@@ -129,6 +134,7 @@ def clusters_to_contingency(y_true, y_pred):
             one_j += table[i][j]
         counts_g.append(one_j)
     return table.tolist(), counts_a, counts_g
+
 
 def one_to_one(y_true, y_pred):
     contingency, row_sums, col_sums = clusters_to_contingency(y_true, y_pred)
@@ -181,7 +187,7 @@ def one_to_one(y_true, y_pred):
     for i in range(len(start_nodes)):
         min_cost_flow.AddArcWithCapacityAndUnitCost(start_nodes[i], end_nodes[i],
                                                     capacities[i], costs[i])
-  
+
     # Add node supplies.
     for i in range(len(supplies)):
         min_cost_flow.SetNodeSupply(i, supplies[i])
@@ -194,7 +200,7 @@ def one_to_one(y_true, y_pred):
     overlap = 0
     for arc in range(min_cost_flow.NumArcs()):
         # Can ignore arcs leading out of source or into sink.
-        if min_cost_flow.Tail(arc)!=source and min_cost_flow.Head(arc)!=sink:
+        if min_cost_flow.Tail(arc) != source and min_cost_flow.Head(arc) != sink:
             # Arcs in the solution have a flow value of 1. Their start and end nodes
             # give an assignment of worker to task.
             if min_cost_flow.Flow(arc) > 0:
@@ -205,6 +211,7 @@ def one_to_one(y_true, y_pred):
                 if col in contingency[row]:
                     overlap += contingency[row][col]
     print("{:5.2f}   one-to-one".format(overlap * 100 / total_count))
+
 
 def overlap(y_true, y_pred, index_true, index_pred):
     right = 0
@@ -235,8 +242,7 @@ def one_to_one_me(y_true, y_pred):
         pred_list.pop(pred_list.index(j_index))
         print(total_right, total_num)
         print("{:5.2f} one-to-one".format(total_right * 100 / total_num))
-    return total_right/total_num
-        
+    return total_right / total_num
 
 
 def compare(predicted_labels, truth_labels, metric):
@@ -244,31 +250,29 @@ def compare(predicted_labels, truth_labels, metric):
         purity_scores = []
         for y_true, y_pred in zip(truth_labels, predicted_labels):
             purity_scores.append(calculate_purity_scores(y_true, y_pred))
-        return sum(purity_scores)/len(purity_scores)
+        return sum(purity_scores) / len(purity_scores)
     elif metric == 'NMI':
         NMI_scores = []
         for y_true, y_pred in zip(truth_labels, predicted_labels):
             NMI_scores.append(normalized_mutual_info_score(y_true, y_pred, average_method='arithmetic'))
-        return sum(NMI_scores)/len(NMI_scores)
+        return sum(NMI_scores) / len(NMI_scores)
     elif metric == 'ARI':
         ARI_scores = []
         for y_true, y_pred in zip(truth_labels, predicted_labels):
             ARI_scores.append(metrics.adjusted_rand_score(y_true, y_pred))
-        return sum(ARI_scores)/len(ARI_scores)
+        return sum(ARI_scores) / len(ARI_scores)
     elif metric == "shen_f":
         f_scores = []
         for y_true, y_pred in zip(truth_labels, predicted_labels):
             f_scores.append(calculate_shen_f_score(y_true, y_pred))
-        return sum(f_scores)/len(f_scores)
+        return sum(f_scores) / len(f_scores)
     elif metric == "Loc3":
         loc_scores = []
         for y_true, y_pred in zip(truth_labels, predicted_labels):
             loc_scores.append(elsner_local_error(y_true, y_pred))
-        return sum(loc_scores)/len(loc_scores)
+        return sum(loc_scores) / len(loc_scores)
     elif metric == "one2one":
         loc_scores = []
         for y_true, y_pred in zip(truth_labels, predicted_labels):
             loc_scores.append(one_to_one_me(y_true, y_pred))
-        return sum(loc_scores)/len(loc_scores)
-
-
+        return sum(loc_scores) / len(loc_scores)
