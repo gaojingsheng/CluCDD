@@ -88,7 +88,7 @@ class RelationModel(nn.Module):
 if __name__ == "__main__":
     parser = argparse.ArgumentParser()
     parser.add_argument('--num_labels', type=int, default=4)
-    parser.add_argument('--temp', type=int, default=1)
+    parser.add_argument('--temp', type=float, default=0.1)
     parser.add_argument('--margin', type=float, default=2.0)
     parser.add_argument('--batch_size', type=int, default=8)
     parser.add_argument('--epoch_num', type=int, default=10)
