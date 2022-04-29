@@ -13,7 +13,6 @@ import copy
 import argparse
 import json
 from dataload import TrainDataLoader
-from loss import ContrastiveLoss, InfoNCELoss
 from trainer import Trainer
 
 

@@ -4,6 +4,7 @@ import torch
 import torch.nn as nn
 import tqdm
 import torch.nn.functional as F
+from loss import ContrastiveLoss, InfoNCELoss
 
 
 def cal_metrics(predicted_labels, truth_labels):
