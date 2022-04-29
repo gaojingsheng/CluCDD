@@ -6,6 +6,7 @@ from tqdm import tqdm
 import torch.nn.functional as F
 import numpy as np
 from loss import ContrastiveLoss, InfoNCELoss
+from sklearn.cluster import KMeans
 
 
 def cal_metrics(predicted_labels, truth_labels):
