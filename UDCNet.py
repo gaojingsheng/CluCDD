@@ -15,6 +15,16 @@ import json
 from dataload import TrainDataLoader
 from trainer import Trainer
 
+"""
+if plot and batch_id < 3:
+    fig = plt.figure()
+    ax = plt.subplot(111)
+    x = output_feats[i][:batch_con_length].detach().cpu().numpy()
+    x_embedded = TSNE(n_components=2).fit_transform(x)
+    plt.scatter(x_embedded[:,0], x_embedded[:,1], c=labels[i])
+    fig.savefig('./EMNLP/Plot/epoch{}_dialogue_{}_{}.png'.format(epoch, batch_id, i))
+    plt.close(fig)"""
+
 
 class RelationModel(nn.Module):
     def __init__(self, args, bert_model, hidden_size=768, n_layers=1, bidirectional=False, dropout=0):

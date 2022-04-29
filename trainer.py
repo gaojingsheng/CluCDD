@@ -4,6 +4,7 @@ import torch
 import torch.nn as nn
 from tqdm import tqdm
 import torch.nn.functional as F
+import numpy as np
 from loss import ContrastiveLoss, InfoNCELoss
 
 
@@ -20,6 +21,7 @@ def cal_metrics(predicted_labels, truth_labels):
 def norm_embedding(embedding):
     """
     Normalization before cos similarity clustering
+    F.normalize(embedding, p=2, dim=-1)
     """
 
     eps = 1e-6
@@ -58,19 +60,19 @@ class Trainer(object):
                     conversation_feats = embeddings.view(mask.size(0), -1, embeddings.size(-1))
                     linear_feats = conversation_feats * mask.unsqueeze(2)
                     output_feats = F.normalize(linear_feats, p=2, dim=2)
-                    # sim_matrix = self.model.attention_score(norm_feats, T=0.5)
-                    # output = torch.matmul(sim_matrix, norm_feats)
-                    # output_feats = torch.cat((norm_feats, output), dim=-1)
+
                 else:
                     output_feats = self.model(inputs, mask)
+                    output_feats = F.normalize(output_feats, p=2, dim=2)
 
                 for i in range(len(labels)):
                     batch_con_length = torch.sum(mask[i])
                     clustering_array = output_feats[i][:batch_con_length].detach().cpu().numpy()
-                    norm_clustering_array = norm_embedding(clustering_array)
                     # print(clustering_array)
-                    km = KMeans(n_clusters=self.num_labels).fit(norm_clustering_array)
+                    km = KMeans(n_clusters=self.num_labels).fit(clustering_array)
                     pseudo_labels = km.labels_
+                    print("Predict labels is: ", pseudo_labels)
+                    print("Truth labels is: ", labels[i])
                     predicted_labels.append(pseudo_labels)
                     truth_labels.append(labels[i])
         purity_score, nmi_score, ari_score, shen_f_score, loc3_score = cal_metrics(predicted_labels,truth_labels)
