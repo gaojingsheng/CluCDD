@@ -2,7 +2,7 @@ import utils
 from torch.utils.tensorboard import SummaryWriter
 import torch
 import torch.nn as nn
-import tqdm
+from tqdm import tqdm
 import torch.nn.functional as F
 from loss import ContrastiveLoss, InfoNCELoss
 
