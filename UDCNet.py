@@ -106,13 +106,13 @@ if __name__ == "__main__":
     savename = "UDC-Net_"
     savename += str(args.temp)
     if args.dataset == "dialogue":
-        all_utterances, labels = utils.read_data(datapath="../dataset/entangled_train.json", mode='train')
-        dev_utterances, dev_labels = utils.read_data(datapath="../dataset/entangled_dev.json", mode='dev')
+        all_utterances, labels = utils.read_data(data_path="../dataset/entangled_train.json", mode='train')
+        dev_utterances, dev_labels = utils.read_data(data_path="../dataset/entangled_dev.json", mode='dev')
     elif args.dataset == "irc":
         savename += "_IRC"
         args.num_labels = 14
-        all_utterances, labels = utils.read_data(datapath="../dataset/irc_dialogue/irc50_train_delete.json", mode='train')
-        dev_utterances, dev_labels = utils.read_data(datapath="./dataset/irc_dialogue/irc50_dev_delete.json", mode='dev')
+        all_utterances, labels = utils.read_data(data_path="../dataset/irc_dialogue/irc50_train_delete.json", mode='train')
+        dev_utterances, dev_labels = utils.read_data(data_path="./dataset/irc_dialogue/irc50_dev_delete.json", mode='dev')
     else:
         raise ValueError("Dataset type must be dialogue or irc.")
 
