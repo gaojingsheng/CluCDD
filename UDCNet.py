@@ -116,11 +116,11 @@ if __name__ == "__main__":
     else:
         raise ValueError("Dataset type must be dialogue or irc.")
 
-    if args.berttype == "simcse":
+    if args.bert_type == "simcse":
         savename += "_SimCSE"
         args.tokenizer = AutoTokenizer.from_pretrained("princeton-nlp/sup-simcse-bert-base-uncased")
         bert_model = AutoModel.from_pretrained("princeton-nlp/sup-simcse-bert-base-uncased")
-    elif args.berttype == "bert":
+    elif args.bert_type == "bert":
         savename += "_Bert"
         args.tokenizer = AutoTokenizer.from_pretrained("bert-base-uncased")
         bert_model = AutoModel.from_pretrained("bert-base-uncased")
