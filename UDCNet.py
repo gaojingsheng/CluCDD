@@ -7,15 +7,11 @@ import os
 import random
 import logging
 import utils
-from utils import calculate_purity_scores, calculate_shen_f_score
-from sklearn.metrics import adjusted_rand_score
-from sklearn.metrics.cluster import normalized_mutual_info_score
 from sklearn.cluster import KMeans
 from tqdm import tqdm
 import copy
 import argparse
 import json
-from torch.utils.tensorboard import SummaryWriter
 from dataload import TrainDataLoader
 from loss import ContrastiveLoss, InfoNCELoss
 from trainer import Trainer
@@ -67,22 +63,17 @@ class RelationModel(nn.Module):
             embeddings = self.bert(**inputs, return_dict=True).last_hidden_state[0]
 
         conversation_feats = embeddings.view(mask.size(0), -1, embeddings.size(-1))
-        if self.args.uselstm:
+        if self.args.lstm:
             conversation_feats, _ = self.lstm(conversation_feats)
 
         linear_feats = self.linear(conversation_feats)
 
         if self.args.ln:
             # linear_feats = linear_feats*mask.unsqueeze(2)
-            norm_feats = F.normalize(linear_feats, p=2, dim=2)
+            # norm_feats = F.normalize(linear_feats, p=2, dim=2)
             return linear_feats
         else:
             return conversation_feats
-
-
-
-
-
 
 
 if __name__ == "__main__":
@@ -142,15 +133,17 @@ if __name__ == "__main__":
     savename += str(args.num_labels)
     savename += ("_" + str(args.samples_num))
     args.savename = savename
+    """
     if args.ln:
         savename += "_LN"
-    if args.uselstm:
+    if args.lstm:
         savename += "_LSTM"
     if args.mean_pooling:
         savename += "_Pool"
-    # if args.use_labels:
-    #     savename += "_Labels"
-
+    """
+    args.ln = True
+    args.lstm = True
+    args.mean_pooling = True
     logger_name = os.path.join("./EMNLP/ConLog", "{}.txt".format(savename))
     LOG_FORMAT = '%(asctime)s %(name)-12s %(levelname)-8s %(message)s'
     logging.basicConfig(format=LOG_FORMAT, level=logging.INFO, filename=logger_name, filemode='w')
