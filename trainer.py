@@ -120,8 +120,12 @@ class Trainer(object):
                         for m in range(len(train_labels) - 1):
                             for n in range(m + 1, len(train_labels)):
                                 if train_labels[m] == train_labels[n]:
+                                    negative_index = (train_labels != train_labels[m])
+                                    negative_index[n] = True
                                     loss += self.info_loss(output[batch][m], output[batch][n],
-                                                        output[batch][torch.arange(output.size(1)) != m])
+                                                        output[batch][negative_index])
+                                    # loss += self.info_loss(output[batch][m], output[batch][n],
+                                    #                     output[batch][torch.arange(output.size(1)) != m])
                                     loss_num += 1
                     loss = loss / loss_num
                 else:

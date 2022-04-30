@@ -1833,3 +1833,107 @@
 2022-04-30 15:07:34,839 root         INFO     Epoch : 0, batch: 1665/3709, step: 1666,loss: 2.6579
 2022-04-30 15:07:51,531 root         INFO     Epoch : 0, batch: 1666/3709, step: 1667,loss: 2.6103
 2022-04-30 15:08:09,288 root         INFO     Epoch : 0, batch: 1667/3709, step: 1668,loss: 2.6441
+2022-04-30 15:08:27,077 root         INFO     Epoch : 0, batch: 1668/3709, step: 1669,loss: 2.6185
+2022-04-30 15:08:40,349 root         INFO     Epoch : 0, batch: 1669/3709, step: 1670,loss: 2.3741
+2022-04-30 15:10:41,040 root         INFO     purity_score: 0.6434, nmi_score: 0.3124, ari_score: 0.1469, shen_f_score: 0.5886, loc3_score: 0.5367
+2022-04-30 15:10:46,124 root         INFO     Epoch : 0, batch: 1670/3709, step: 1671,loss: 2.5277
+2022-04-30 15:11:03,534 root         INFO     Epoch : 0, batch: 1671/3709, step: 1672,loss: 2.8201
+2022-04-30 15:11:25,092 root         INFO     Epoch : 0, batch: 1672/3709, step: 1673,loss: 2.6482
+2022-04-30 15:11:43,290 root         INFO     Epoch : 0, batch: 1673/3709, step: 1674,loss: 2.8743
+2022-04-30 15:12:05,159 root         INFO     Epoch : 0, batch: 1674/3709, step: 1675,loss: 2.7233
+2022-04-30 15:12:24,310 root         INFO     Epoch : 0, batch: 1675/3709, step: 1676,loss: 2.6644
+2022-04-30 15:12:42,596 root         INFO     Epoch : 0, batch: 1676/3709, step: 1677,loss: 2.643
+2022-04-30 15:13:01,284 root         INFO     Epoch : 0, batch: 1677/3709, step: 1678,loss: 2.8173
+2022-04-30 15:13:25,643 root         INFO     Epoch : 0, batch: 1678/3709, step: 1679,loss: 2.8626
+2022-04-30 15:13:48,892 root         INFO     Epoch : 0, batch: 1679/3709, step: 1680,loss: 2.7064
+2022-04-30 15:15:51,167 root         INFO     purity_score: 0.6473, nmi_score: 0.3179, ari_score: 0.1496, shen_f_score: 0.5881, loc3_score: 0.5414
+2022-04-30 15:15:56,889 root         INFO     Epoch : 0, batch: 1680/3709, step: 1681,loss: 2.5862
+2022-04-30 15:16:10,983 root         INFO     Epoch : 0, batch: 1681/3709, step: 1682,loss: 2.4438
+2022-04-30 15:16:24,791 root         INFO     Epoch : 0, batch: 1682/3709, step: 1683,loss: 2.7236
+2022-04-30 15:16:41,358 root         INFO     Epoch : 0, batch: 1683/3709, step: 1684,loss: 2.6964
+2022-04-30 15:16:58,370 root         INFO     Epoch : 0, batch: 1684/3709, step: 1685,loss: 2.7043
+2022-04-30 15:17:19,505 root         INFO     Epoch : 0, batch: 1685/3709, step: 1686,loss: 2.7644
+2022-04-30 15:17:40,069 root         INFO     Epoch : 0, batch: 1686/3709, step: 1687,loss: 2.5515
+2022-04-30 15:17:57,865 root         INFO     Epoch : 0, batch: 1687/3709, step: 1688,loss: 2.7113
+2022-04-30 15:18:19,169 root         INFO     Epoch : 0, batch: 1688/3709, step: 1689,loss: 2.6307
+2022-04-30 15:18:38,080 root         INFO     Epoch : 0, batch: 1689/3709, step: 1690,loss: 2.6198
+2022-04-30 15:20:37,991 root         INFO     purity_score: 0.6426, nmi_score: 0.3146, ari_score: 0.147, shen_f_score: 0.5869, loc3_score: 0.5385
+2022-04-30 15:20:43,528 root         INFO     Epoch : 0, batch: 1690/3709, step: 1691,loss: 2.676
+2022-04-30 15:20:59,579 root         INFO     Epoch : 0, batch: 1691/3709, step: 1692,loss: 2.681
+2022-04-30 15:21:16,457 root         INFO     Epoch : 0, batch: 1692/3709, step: 1693,loss: 2.5826
+2022-04-30 15:21:30,652 root         INFO     Epoch : 0, batch: 1693/3709, step: 1694,loss: 2.6021
+2022-04-30 15:21:51,657 root         INFO     Epoch : 0, batch: 1694/3709, step: 1695,loss: 2.7374
+2022-04-30 15:22:13,231 root         INFO     Epoch : 0, batch: 1695/3709, step: 1696,loss: 2.7711
+2022-04-30 15:22:32,140 root         INFO     Epoch : 0, batch: 1696/3709, step: 1697,loss: 2.5728
+2022-04-30 15:22:49,445 root         INFO     Epoch : 0, batch: 1697/3709, step: 1698,loss: 2.7134
+2022-04-30 15:23:06,543 root         INFO     Epoch : 0, batch: 1698/3709, step: 1699,loss: 2.5252
+2022-04-30 15:23:21,160 root         INFO     Epoch : 0, batch: 1699/3709, step: 1700,loss: 2.5534
+2022-04-30 15:25:22,984 root         INFO     purity_score: 0.649, nmi_score: 0.3202, ari_score: 0.1527, shen_f_score: 0.5925, loc3_score: 0.5436
+2022-04-30 15:25:31,525 root         INFO     Epoch : 0, batch: 1700/3709, step: 1701,loss: 2.7051
+2022-04-30 15:25:51,642 root         INFO     Epoch : 0, batch: 1701/3709, step: 1702,loss: 2.7114
+2022-04-30 15:26:09,107 root         INFO     Epoch : 0, batch: 1702/3709, step: 1703,loss: 2.5821
+2022-04-30 15:26:29,729 root         INFO     Epoch : 0, batch: 1703/3709, step: 1704,loss: 2.7388
+2022-04-30 15:26:57,603 root         INFO     Epoch : 0, batch: 1704/3709, step: 1705,loss: 2.8326
+2022-04-30 15:27:19,185 root         INFO     Epoch : 0, batch: 1705/3709, step: 1706,loss: 2.5835
+2022-04-30 15:27:36,970 root         INFO     Epoch : 0, batch: 1706/3709, step: 1707,loss: 2.5578
+2022-04-30 15:27:53,130 root         INFO     Epoch : 0, batch: 1707/3709, step: 1708,loss: 2.5855
+2022-04-30 15:28:10,955 root         INFO     Epoch : 0, batch: 1708/3709, step: 1709,loss: 2.653
+2022-04-30 15:28:29,448 root         INFO     Epoch : 0, batch: 1709/3709, step: 1710,loss: 2.6268
+2022-04-30 15:30:29,635 root         INFO     purity_score: 0.6443, nmi_score: 0.3161, ari_score: 0.1445, shen_f_score: 0.5871, loc3_score: 0.5395
+2022-04-30 15:30:35,555 root         INFO     Epoch : 0, batch: 1710/3709, step: 1711,loss: 2.6333
+2022-04-30 15:30:53,975 root         INFO     Epoch : 0, batch: 1711/3709, step: 1712,loss: 2.7989
+2022-04-30 15:31:14,510 root         INFO     Epoch : 0, batch: 1712/3709, step: 1713,loss: 2.6465
+2022-04-30 15:31:30,448 root         INFO     Epoch : 0, batch: 1713/3709, step: 1714,loss: 2.7544
+2022-04-30 15:31:51,080 root         INFO     Epoch : 0, batch: 1714/3709, step: 1715,loss: 2.7415
+2022-04-30 15:32:12,449 root         INFO     Epoch : 0, batch: 1715/3709, step: 1716,loss: 2.6
+2022-04-30 15:32:28,778 root         INFO     Epoch : 0, batch: 1716/3709, step: 1717,loss: 2.5307
+2022-04-30 15:32:47,294 root         INFO     Epoch : 0, batch: 1717/3709, step: 1718,loss: 2.645
+2022-04-30 15:33:09,142 root         INFO     Epoch : 0, batch: 1718/3709, step: 1719,loss: 2.5402
+2022-04-30 15:33:24,632 root         INFO     Epoch : 0, batch: 1719/3709, step: 1720,loss: 2.5224
+2022-04-30 15:35:22,167 root         INFO     purity_score: 0.6434, nmi_score: 0.3119, ari_score: 0.1463, shen_f_score: 0.5878, loc3_score: 0.536
+2022-04-30 15:35:26,326 root         INFO     Epoch : 0, batch: 1720/3709, step: 1721,loss: 2.4794
+2022-04-30 15:35:38,083 root         INFO     Epoch : 0, batch: 1721/3709, step: 1722,loss: 2.63
+2022-04-30 15:35:51,019 root         INFO     Epoch : 0, batch: 1722/3709, step: 1723,loss: 2.5318
+2022-04-30 15:36:03,283 root         INFO     Epoch : 0, batch: 1723/3709, step: 1724,loss: 2.6135
+2022-04-30 15:36:19,741 root         INFO     Epoch : 0, batch: 1724/3709, step: 1725,loss: 2.6635
+2022-04-30 15:36:39,030 root         INFO     Epoch : 0, batch: 1725/3709, step: 1726,loss: 2.8319
+2022-04-30 15:37:00,627 root         INFO     Epoch : 0, batch: 1726/3709, step: 1727,loss: 2.6608
+2022-04-30 15:37:22,407 root         INFO     Epoch : 0, batch: 1727/3709, step: 1728,loss: 2.7628
+2022-04-30 15:37:42,904 root         INFO     Epoch : 0, batch: 1728/3709, step: 1729,loss: 2.5577
+2022-04-30 15:38:04,147 root         INFO     Epoch : 0, batch: 1729/3709, step: 1730,loss: 2.7963
+2022-04-30 15:40:12,336 root         INFO     purity_score: 0.6386, nmi_score: 0.3057, ari_score: 0.1401, shen_f_score: 0.5837, loc3_score: 0.5313
+2022-04-30 15:40:18,209 root         INFO     Epoch : 0, batch: 1730/3709, step: 1731,loss: 2.6331
+2022-04-30 15:40:32,473 root         INFO     Epoch : 0, batch: 1731/3709, step: 1732,loss: 2.6215
+2022-04-30 15:40:45,483 root         INFO     Epoch : 0, batch: 1732/3709, step: 1733,loss: 2.6342
+2022-04-30 15:40:59,549 root         INFO     Epoch : 0, batch: 1733/3709, step: 1734,loss: 2.5849
+2022-04-30 15:41:15,975 root         INFO     Epoch : 0, batch: 1734/3709, step: 1735,loss: 2.7684
+2022-04-30 15:41:38,071 root         INFO     Epoch : 0, batch: 1735/3709, step: 1736,loss: 2.7639
+2022-04-30 15:42:00,552 root         INFO     Epoch : 0, batch: 1736/3709, step: 1737,loss: 2.815
+2022-04-30 15:42:21,997 root         INFO     Epoch : 0, batch: 1737/3709, step: 1738,loss: 2.6682
+2022-04-30 15:42:43,012 root         INFO     Epoch : 0, batch: 1738/3709, step: 1739,loss: 2.7799
+2022-04-30 15:43:05,262 root         INFO     Epoch : 0, batch: 1739/3709, step: 1740,loss: 2.6989
+2022-04-30 15:45:07,199 root         INFO     purity_score: 0.6486, nmi_score: 0.3182, ari_score: 0.1489, shen_f_score: 0.5893, loc3_score: 0.5421
+2022-04-30 15:45:12,349 root         INFO     Epoch : 0, batch: 1740/3709, step: 1741,loss: 2.6157
+2022-04-30 15:45:25,631 root         INFO     Epoch : 0, batch: 1741/3709, step: 1742,loss: 2.6253
+2022-04-30 15:45:39,606 root         INFO     Epoch : 0, batch: 1742/3709, step: 1743,loss: 2.6232
+2022-04-30 15:45:54,045 root         INFO     Epoch : 0, batch: 1743/3709, step: 1744,loss: 2.7162
+2022-04-30 15:46:12,381 root         INFO     Epoch : 0, batch: 1744/3709, step: 1745,loss: 2.6523
+2022-04-30 15:46:32,676 root         INFO     Epoch : 0, batch: 1745/3709, step: 1746,loss: 2.7185
+2022-04-30 15:46:53,226 root         INFO     Epoch : 0, batch: 1746/3709, step: 1747,loss: 2.6884
+2022-04-30 15:47:14,283 root         INFO     Epoch : 0, batch: 1747/3709, step: 1748,loss: 2.7541
+2022-04-30 15:47:36,483 root         INFO     Epoch : 0, batch: 1748/3709, step: 1749,loss: 2.6904
+2022-04-30 15:47:54,307 root         INFO     Epoch : 0, batch: 1749/3709, step: 1750,loss: 2.588
+2022-04-30 15:49:54,046 root         INFO     purity_score: 0.6479, nmi_score: 0.3177, ari_score: 0.1524, shen_f_score: 0.5912, loc3_score: 0.5413
+2022-04-30 15:49:59,032 root         INFO     Epoch : 0, batch: 1750/3709, step: 1751,loss: 2.6072
+2022-04-30 15:50:12,194 root         INFO     Epoch : 0, batch: 1751/3709, step: 1752,loss: 2.6042
+2022-04-30 15:50:25,118 root         INFO     Epoch : 0, batch: 1752/3709, step: 1753,loss: 2.5745
+2022-04-30 15:50:37,926 root         INFO     Epoch : 0, batch: 1753/3709, step: 1754,loss: 2.6238
+2022-04-30 15:50:52,892 root         INFO     Epoch : 0, batch: 1754/3709, step: 1755,loss: 2.6341
+2022-04-30 15:51:11,920 root         INFO     Epoch : 0, batch: 1755/3709, step: 1756,loss: 2.6664
+2022-04-30 15:51:32,667 root         INFO     Epoch : 0, batch: 1756/3709, step: 1757,loss: 2.5855
+2022-04-30 15:51:49,291 root         INFO     Epoch : 0, batch: 1757/3709, step: 1758,loss: 2.4732
+2022-04-30 15:52:07,956 root         INFO     Epoch : 0, batch: 1758/3709, step: 1759,loss: 2.7346
+2022-04-30 15:52:31,456 root         INFO     Epoch : 0, batch: 1759/3709, step: 1760,loss: 2.7112
+2022-04-30 15:54:39,495 root         INFO     purity_score: 0.6486, nmi_score: 0.3209, ari_score: 0.152, shen_f_score: 0.5915, loc3_score: 0.544
+2022-04-30 15:54:45,202 root         INFO     Epoch : 0, batch: 1760/3709, step: 1761,loss: 2.6249
+2022-04-30 15:55:01,162 root         INFO     Epoch : 0, batch: 1761/3709, step: 1762,loss: 2.6645
