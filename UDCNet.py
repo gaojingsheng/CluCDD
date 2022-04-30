@@ -72,6 +72,12 @@ class RelationModel(nn.Module):
             embeddings = self.bert(**inputs, return_dict=True).last_hidden_state[0]
 
         conversation_feats = embeddings.view(mask.size(0), -1, embeddings.size(-1))
+        # print("conversation size is:", conversation_feats.size())
+        # print("maks size is:", mask.size())
+        # print(mask)
+        # import sys
+        # sys.exit()
+
         if self.args.lstm:
             conversation_feats, _ = self.lstm(conversation_feats)
 
@@ -100,6 +106,7 @@ if __name__ == "__main__":
     parser.add_argument('--ln', action='store_true')
     # parser.add_argument('--use_labels', action='store_true')
     parser.add_argument('--bert_type', type=str, default='bert', help="bert, simcse")
+    parser.add_argument('--loss', type=str, default='Info', help="Cont, Info")
 
     parser.add_argument('--dataset', type=str, default='dialogue')
     parser.add_argument('--save_model_path', type=str, default="./EMNLP/Model")
@@ -141,6 +148,9 @@ if __name__ == "__main__":
     savename += ("_Margin" + str(args.margin))
     savename += str(args.num_labels)
     savename += ("_" + str(args.samples_num))
+    savename += ("_" + str(args.learning_rate))
+    savename += ("_" + str(args.loss))
+
     args.savename = savename
     """
     if args.ln:

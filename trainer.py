@@ -7,6 +7,7 @@ import torch.nn.functional as F
 import numpy as np
 from loss import ContrastiveLoss, InfoNCELoss
 from sklearn.cluster import KMeans
+import sys
 
 
 def cal_metrics(predicted_labels, truth_labels):
@@ -103,26 +104,29 @@ class Trainer(object):
                     inputs[things] = inputs[things][:, :self.args.crop_num].cuda()
                 mask = mask.cuda()
                 output = self.model(inputs, mask)
-                """
-                loss = torch.zeros(1, dtype=torch.float32).to(self.device)
-                for batch in range(len(labels)):
-                    train_labels = labels[batch]
-                    for m in range(len(train_labels)-1):
-                        for n in range(m+1, len(train_labels)):
-                            loss += self.loss_fn(output[batch][m], output[batch][n], train_labels[m]!=train_labels[n])
-                loss = loss/((len(train_labels)-1)**2*self.args.batch_size)
-                """
-                loss = torch.zeros(1, dtype=torch.float32).to(self.device)
-                loss_num = 0
-                for batch in range(len(labels)):
-                    train_labels = labels[batch]
-                    for m in range(len(train_labels) - 1):
-                        for n in range(m + 1, len(train_labels)):
-                            if train_labels[m] == train_labels[n]:
-                                loss += self.info_loss(output[batch][m], output[batch][n],
-                                                       output[batch][torch.arange(output.size(1)) != m])
-                                loss_num += 1
-                loss = loss / loss_num
+                if self.args.loss == "Cont":
+                    loss = torch.zeros(1, dtype=torch.float32).to(self.device)
+                    for batch in range(len(labels)):
+                        train_labels = labels[batch]
+                        for m in range(len(train_labels)-1):
+                            for n in range(m+1, len(train_labels)):
+                                loss += self.loss_fn(output[batch][m], output[batch][n], train_labels[m]!=train_labels[n])
+                    loss = loss/((len(train_labels)-1)**2*self.args.batch_size)
+                elif self.args.loss == "Info":
+                    loss = torch.zeros(1, dtype=torch.float32).to(self.device)
+                    loss_num = 0
+                    for batch in range(len(labels)):
+                        train_labels = labels[batch]
+                        for m in range(len(train_labels) - 1):
+                            for n in range(m + 1, len(train_labels)):
+                                if train_labels[m] == train_labels[n]:
+                                    loss += self.info_loss(output[batch][m], output[batch][n],
+                                                        output[batch][torch.arange(output.size(1)) != m])
+                                    loss_num += 1
+                    loss = loss / loss_num
+                else:
+                    print("Not contastive loss of infoNCE loss!")
+                    sys.exit()
                 writer.add_scalar('loss', loss.data.item(), global_step=step_cnt)
                 log_msg = "Epoch : {}, batch: {}/{}, step: {},loss: {}".format(epoch, i, len(train_loader), step_cnt,
                                                                                round(loss.data.item(), 4))
@@ -132,7 +136,7 @@ class Trainer(object):
                 loss.backward()
                 self.optimizer.step()
                 if self.args.dataset == "dialogue":
-                    if step_cnt % 10 == 0 and epoch == 0:
+                    if step_cnt % 100 == 0 and epoch == 0:
                         # self.evaluate(dev_loader, first_time=True)
                         self.evaluate(dev_loader)
                         self.model.train()
@@ -143,7 +147,7 @@ class Trainer(object):
                                                   "step_{}.pkl".format(step_cnt))
                         torch.save(self.model.state_dict(), model_name)
                 elif self.args.dataset == "irc":
-                    if step_cnt % 30 == 0 and epoch == 0:
+                    if step_cnt % 100 == 0 and epoch == 0:
                         # self.evaluate(dev_loader, first_time=True)
                         self.evaluate(dev_loader)
                         self.model.train()

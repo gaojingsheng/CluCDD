@@ -1,0 +1,1 @@
+2022-04-30 15:05:51,970 root         INFO     Learning Rate: 0.0005; Random Seed: 56; Clustering Number: 4; 
