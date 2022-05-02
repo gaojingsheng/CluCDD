@@ -26,6 +26,7 @@ if plot and batch_id < 3:
     plt.close(fig)"""
 
 
+
 class RelationModel(nn.Module):
     def __init__(self, args, bert_model, hidden_size=768, n_layers=1, bidirectional=False, dropout=0):
         super(RelationModel, self).__init__()
@@ -34,12 +35,16 @@ class RelationModel(nn.Module):
         self.bert = bert_model
         self.lstm = nn.LSTM(hidden_size, hidden_size, n_layers, batch_first=True,
                             bidirectional=bidirectional, dropout=dropout)
+        self.lstm2 = nn.LSTM(128, 128, n_layers, batch_first=True,
+                             bidirectional=bidirectional, dropout=dropout)
 
         self.dense = nn.Linear(hidden_size, hidden_size)
-
+        self.dense2 = nn.Linear(128, 10)
+        # self.cluster =
         self.linear = nn.Sequential(
             nn.Linear(hidden_size, hidden_size),
-            nn.ReLU()
+            nn.ReLU(),
+            nn.Linear(hidden_size, 128)
         )
         # self.bn = nn.BatchNorm1d(hidden_size, affine=False)
 
@@ -64,6 +69,7 @@ class RelationModel(nn.Module):
         return new_matrix
 
     def forward(self, inputs, mask):
+        #  mask: (8, 45) Bool
         if self.args.mean_pooling:
             encoded_layer_12 = self.bert(**inputs, output_hidden_states=True, return_dict=True).last_hidden_state
             embeddings = self.dense(encoded_layer_12.mean(dim=1))
@@ -71,30 +77,31 @@ class RelationModel(nn.Module):
             # pooled_output = self.bert(**inputs, return_dict=True).pooler_output
             embeddings = self.bert(**inputs, return_dict=True).last_hidden_state[0]
 
-        conversation_feats = embeddings.view(mask.size(0), -1, embeddings.size(-1))
-        # print("conversation size is:", conversation_feats.size())
-        # print("maks size is:", mask.size())
-        # print(mask)
-        # import sys
-        # sys.exit()
-
+        conversation_feats = embeddings.view(mask.size(0), -1, embeddings.size(-1))  # (8, 45, 300)
         if self.args.lstm:
             conversation_feats, _ = self.lstm(conversation_feats)
 
         linear_feats = self.linear(conversation_feats)
 
-        if self.args.ln:
-            # linear_feats = linear_feats*mask.unsqueeze(2)
-            # norm_feats = F.normalize(linear_feats, p=2, dim=2)
-            return linear_feats
-        else:
-            return conversation_feats
+        # Predict the cluster number
+        # cluster_feats = linear_feats.view(-1, linear_feats.size(2))
+        cluster_mask = torch.sum(mask, dim=1).cpu()
+        # print(linear_feats.device)
+        # print(cluster_mask.device)
+        packed_ = torch.nn.utils.rnn.pack_padded_sequence(linear_feats, cluster_mask, batch_first=True,
+                                                          enforce_sorted=False)
+        _, hidden_state = self.lstm2(packed_)
+        h_state = hidden_state[0].squeeze()
+        cluster_output = self.dense2(h_state)
+
+        return linear_feats, cluster_output
 
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser()
     parser.add_argument('--num_labels', type=int, default=4)
     parser.add_argument('--temp', type=float, default=0.1)
+    parser.add_argument('--gama', type=float, default=1)
     parser.add_argument('--margin', type=float, default=2.0)
     parser.add_argument('--batch_size', type=int, default=8)
     parser.add_argument('--epoch_num', type=int, default=10)
@@ -150,6 +157,7 @@ if __name__ == "__main__":
     savename += ("_" + str(args.samples_num))
     savename += ("_" + str(args.learning_rate))
     savename += ("_" + str(args.loss))
+    savename += ("_" + str(args.gama))
 
     args.savename = savename
     """

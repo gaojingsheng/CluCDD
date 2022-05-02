@@ -39,14 +39,44 @@ class InfoNCELoss(torch.nn.Module):
     def __init__(self, temp):
         super().__init__()
         self.sim = Similarity(temp=temp)
+        self.temp = temp
 
     def forward(self, anchor, positive, negative):
         eps = 1e-6
-        negative_sim_sum = torch.zeros([1], dtype=torch.float).cuda()
+        device = anchor.device
+        pos_sim = torch.exp(torch.sum(anchor * positive, dim=-1) / self.temp)
+        negative_sim_sum = torch.zeros([1], dtype=torch.float).to(device)
 
         for i in range(negative.size(0)):
-            negative_sim_sum += torch.exp(self.sim(anchor, negative[i]))
+            # negative_sim_sum += torch.exp(self.sim(anchor, negative[i]))
+            negative_sim_sum += torch.exp(torch.sum(anchor*negative[i], dim=-1)/self.temp)
+
         # print("Positive cos similarity is:", torch.exp(self.sim(anchor, positive)))  # 0.04
         # print("Negative cos similarity is:", negative_sim_sum)  # 1.00
 
-        return -torch.log(torch.exp(self.sim(anchor, positive)) / negative_sim_sum + eps)
+        return (-torch.log(pos_sim/(negative_sim_sum+pos_sim+eps))).mean()
+
+
+class ConversationLoss(torch.nn.Module):
+    """
+    An unofficial implementation of InfoNCELoss
+    By Mario 2022.04
+    """
+
+    def __init__(self, temp):
+        super().__init__()
+        self.sim = Similarity(temp=temp)
+
+    def forward(self, feats, labels):
+        device = feats.device
+        length = len(labels)
+        feats = feats[:length]
+        mask = torch.zeros([length, length], dtype=torch.bool).to(device)
+        for i in range(length):
+            for j in range(i, length):
+                if labels[i] == labels[j]:
+                    mask[i][j] = True
+                    mask[j][i] = True
+        mask = ~mask
+
+        return
