@@ -1,4 +1,4 @@
-## DCCNet:
+## CluCDD:
 This project contains codes of our CluCDD.
 
 ## Overview
