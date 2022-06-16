@@ -1,5 +1,0 @@
-2022-04-30 00:49:23,055 root         INFO     Learning Rate: 0.0005; Random Seed: 6; Clustering Number: 4; 
-2022-04-30 00:49:39,418 root         INFO     Epoch : 0, batch: 0/3709, step: 1,loss: 3.7241
-2022-04-30 00:50:05,417 root         INFO     Epoch : 0, batch: 1/3709, step: 2,loss: 3.368
-2022-04-30 00:50:27,064 root         INFO     Epoch : 0, batch: 2/3709, step: 3,loss: 3.2465
-2022-04-30 00:50:49,522 root         INFO     Epoch : 0, batch: 3/3709, step: 4,loss: 3.1785
