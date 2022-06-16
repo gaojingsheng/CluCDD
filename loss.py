@@ -33,7 +33,6 @@ class Similarity(torch.nn.Module):
 class InfoNCELoss(torch.nn.Module):
     """
     An unofficial implementation of InfoNCELoss
-    By Mario 2022.04
     """
 
     def __init__(self, temp):
@@ -60,7 +59,6 @@ class InfoNCELoss(torch.nn.Module):
 class ConversationLoss(torch.nn.Module):
     """
     An unofficial implementation of InfoNCELoss
-    By Mario 2022.04
     """
 
     def __init__(self, temp):
