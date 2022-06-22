@@ -1,5 +1,5 @@
 ## CluCDD:
-This project contains codes of our CluCDD.
+This project contains codes of our anomymous CluCDD.
 
 ## Overview
 We propose an effective Dialogue Disentanglement network
