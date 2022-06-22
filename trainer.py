@@ -9,9 +9,6 @@ from loss import ContrastiveLoss, InfoNCELoss, Similarity
 from sklearn.cluster import KMeans
 import sys
 import os
-# import seaborn as sns
-# import matplotlib.pylab as plt
-
 
 def cal_metrics(predicted_labels, truth_labels):
 
@@ -144,9 +141,6 @@ class Trainer(object):
 
         writer = SummaryWriter('runs/' + self.args.savename)
         step_cnt = 0
-        # self.evaluate(dev_loader, first_time=True)
-        # self.evaluate(dev_loader)
-        # train_loader = self.evaluate(train_loader, mode="train", first_time=True)
         self.model.train()
         for epoch in tqdm(range(self.epoch_num)):
             epoch_loss = 0
@@ -192,8 +186,6 @@ class Trainer(object):
                     print("Not contastive loss of infoNCE loss!")
                     sys.exit()
                 # class_loss = self.entro_loss(cluster_output, torch.max(labels, dim=1).values)
-                # print(cluster_output.size())
-                # print(torch.tensor([max(batch_label) for batch_label in labels], dtype=torch.long))
                 class_loss = self.entro_loss(cluster_output, torch.tensor([max(batch_label) for batch_label in labels], dtype=torch.long).cuda())
                 loss = feat_loss + self.args.gama * class_loss
                 writer.add_scalar('feats_loss', feat_loss.data.item(), global_step=step_cnt)
@@ -207,7 +199,6 @@ class Trainer(object):
                 self.optimizer.step()
                 if self.args.dataset == "dialogue":
                     if step_cnt % 100 == 0 and epoch == 0:
-                        # self.evaluate(dev_loader, first_time=True)
                         self.evaluate(dev_loader)
                         self.model.train()
                     elif step_cnt % 1000 == 0:
