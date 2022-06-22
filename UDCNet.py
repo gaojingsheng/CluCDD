@@ -15,18 +15,6 @@ import json
 from dataload import TrainDataLoader
 from trainer import Trainer
 
-"""
-if plot and batch_id < 3:
-    fig = plt.figure()
-    ax = plt.subplot(111)
-    x = output_feats[i][:batch_con_length].detach().cpu().numpy()
-    x_embedded = TSNE(n_components=2).fit_transform(x)
-    plt.scatter(x_embedded[:,0], x_embedded[:,1], c=labels[i])
-    fig.savefig('./EMNLP/Plot/epoch{}_dialogue_{}_{}.png'.format(epoch, batch_id, i))
-    plt.close(fig)"""
-
-
-
 class RelationModel(nn.Module):
     def __init__(self, args, bert_model, hidden_size=768, n_layers=1, bidirectional=False, dropout=0):
         super(RelationModel, self).__init__()
@@ -37,17 +25,13 @@ class RelationModel(nn.Module):
                             bidirectional=bidirectional, dropout=dropout)
         self.lstm2 = nn.LSTM(128, 128, n_layers, batch_first=True,
                              bidirectional=bidirectional, dropout=dropout)
-
         self.dense = nn.Linear(hidden_size, hidden_size)
         self.dense2 = nn.Linear(128, 10)
-        # self.cluster =
         self.linear = nn.Sequential(
             nn.Linear(hidden_size, hidden_size),
             nn.ReLU(),
             nn.Linear(hidden_size, 128)
         )
-        # self.bn = nn.BatchNorm1d(hidden_size, affine=False)
-
         self.freeze_parameters(self.bert)
 
     @staticmethod
@@ -74,7 +58,6 @@ class RelationModel(nn.Module):
             encoded_layer_12 = self.bert(**inputs, output_hidden_states=True, return_dict=True).last_hidden_state
             embeddings = self.dense(encoded_layer_12.mean(dim=1))
         else:
-            # pooled_output = self.bert(**inputs, return_dict=True).pooler_output
             embeddings = self.bert(**inputs, return_dict=True).last_hidden_state[0]
 
         conversation_feats = embeddings.view(mask.size(0), -1, embeddings.size(-1))  # (8, 45, 300)
@@ -84,10 +67,7 @@ class RelationModel(nn.Module):
         linear_feats = self.linear(conversation_feats)
 
         # Predict the cluster number
-        # cluster_feats = linear_feats.view(-1, linear_feats.size(2))
         cluster_mask = torch.sum(mask, dim=1).cpu()
-        # print(linear_feats.device)
-        # print(cluster_mask.device)
         packed_ = torch.nn.utils.rnn.pack_padded_sequence(linear_feats, cluster_mask, batch_first=True,
                                                           enforce_sorted=False)
         _, hidden_state = self.lstm2(packed_)
@@ -160,22 +140,13 @@ if __name__ == "__main__":
     savename += ("_" + str(args.gama))
 
     args.savename = savename
-    """
-    if args.ln:
-        savename += "_LN"
-    if args.lstm:
-        savename += "_LSTM"
-    if args.mean_pooling:
-        savename += "_Pool"
-    """
     args.ln = True
     args.lstm = True
     args.mean_pooling = True
-    logger_name = os.path.join("./EMNLP/ConLog", "{}.txt".format(savename))
+    logger_name = os.path.join("./Log", "{}.txt".format(savename))
     LOG_FORMAT = '%(asctime)s %(name)-12s %(levelname)-8s %(message)s'
     logging.basicConfig(format=LOG_FORMAT, level=logging.INFO, filename=logger_name, filemode='w')
     logger = logging.getLogger()
-
     log_head = "Learning Rate: {}; Random Seed: {}; Clustering Number: {}; ".format(args.learning_rate, SEED,
                                                                                     args.num_labels)
     logger.info(log_head)
