@@ -47,11 +47,7 @@ class InfoNCELoss(torch.nn.Module):
         negative_sim_sum = torch.zeros([1], dtype=torch.float).to(device)
 
         for i in range(negative.size(0)):
-            # negative_sim_sum += torch.exp(self.sim(anchor, negative[i]))
             negative_sim_sum += torch.exp(torch.sum(anchor*negative[i], dim=-1)/self.temp)
-
-        # print("Positive cos similarity is:", torch.exp(self.sim(anchor, positive)))  # 0.04
-        # print("Negative cos similarity is:", negative_sim_sum)  # 1.00
 
         return (-torch.log(pos_sim/(negative_sim_sum+pos_sim+eps))).mean()
 
