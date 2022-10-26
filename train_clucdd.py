@@ -96,7 +96,7 @@ if __name__ == "__main__":
     parser.add_argument('--loss', type=str, default='Info', help="Cont, Info")
 
     parser.add_argument('--dataset', type=str, default='dialogue')
-    parser.add_argument('--save_model_path', type=str, default="./EMNLP/Model")
+    parser.add_argument('--save_model_path', type=str, default="")
 
     parser.add_argument('--device', type=str, default='0')
 
