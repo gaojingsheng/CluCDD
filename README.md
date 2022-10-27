@@ -19,17 +19,19 @@ Our codebase requires the following Python and PyTorch versions:
 
 ### Training and Evaluate
 
-quick start :
+To train CluCDD with a single GPU, run :
 
 ```
 python train_clucdd.py --do_train
 ```
 
-evaluate:
+To evaluate CluCDD with a saved checkpoint:
 
 ```
 python train_clucdd.py --do_test --model_path <THE PATH OF THE SAVED CHECKPOINT>
 ```
 
+## License
 
+MIT License
 
