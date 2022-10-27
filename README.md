@@ -17,13 +17,19 @@ Our codebase requires the following Python and PyTorch versions:
 - Python >= 3.7
 - PyTorch >= 1.7.1 
 
-### Training and Evaulate
+### Training and Evaluate
 
-quick start:
+quick start :
 
 ```
-python train_clucdd.py
+python train_clucdd.py --do_train
 ```
 
-### 
+evaluate:
+
+```
+python train_clucdd.py --do_test --model_path <THE PATH OF THE SAVED CHECKPOINT>
+```
+
+
 

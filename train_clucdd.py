@@ -91,6 +91,10 @@ if __name__ == "__main__":
     parser.add_argument('--lstm', action='store_true')
     parser.add_argument('--mean_pooling', action='store_true')
     parser.add_argument('--ln', action='store_true')
+    parser.add_argument('--do_train', action='store_true')
+    parser.add_argument('--do_test', action='store_true')
+    parser.add_argument('--model_path', type=str, default='')
+
     # parser.add_argument('--use_labels', action='store_true')
     parser.add_argument('--bert_type', type=str, default='bert', help="bert, simcse")
     parser.add_argument('--loss', type=str, default='Info', help="Cont, Info")
@@ -156,5 +160,8 @@ if __name__ == "__main__":
 
     model = RelationModel(args, bert_model, hidden_size=768).cuda()
     trainer = Trainer(args, model, logger, all_utterances)
-
-    trainer.train(train_loader, dev_loader)
+    if args.do_train:
+        trainer.train(train_loader, dev_loader)
+    elif args.do_test:
+        model.load_state_dict(torch.load(args.model_path))
+        trainer.evaluate(dev_loader)
