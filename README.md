@@ -1,6 +1,6 @@
-[![License: MIT](../../source/images/README/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
-![Python](../../source/images/README/python-green.svg)
-![GitHub stars](../../source/images/README/DMF.svg)
+[![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
+![Python](https://img.shields.io/badge/python-green.svg)
+![GitHub stars](https://img.shields.io/github/stars/gaojingsheng/CluCDD.svg?style=flat&label=Star)
 
 ## CluCDD
 
