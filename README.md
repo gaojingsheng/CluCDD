@@ -1,4 +1,9 @@
+[![License: MIT](../../source/images/README/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
+![Python](../../source/images/README/python-green.svg)
+![GitHub stars](../../source/images/README/DMF.svg)
+
 ## CluCDD
+
 This includes an original implementation of CluCDD:  Contrastive Dialogue Disentanglement via Clustering
 
 ## Get Started
@@ -16,6 +21,7 @@ Our codebase requires the following Python and PyTorch versions:
 
 - Python >= 3.7
 - PyTorch >= 1.7.1 
+- transformers
 
 ### Training and Evaluate
 
@@ -30,6 +36,10 @@ To evaluate CluCDD with a saved checkpoint:
 ```
 python train_clucdd.py --do_test --model_path <THE PATH OF THE SAVED CHECKPOINT>
 ```
+
+### Acknowledgments
+This work was supported by the National Natural Science Foundation of China under Projects (Grant No. 61977045 and Grant No. 81974276).
+If you have further questions and suggestions, please feel free to contact us (gaojingsheng@sjtu.edu.cn).
 
 ## License
 
