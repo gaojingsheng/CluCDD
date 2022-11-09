@@ -41,7 +41,3 @@ python train_clucdd.py --do_test --model_path <THE PATH OF THE SAVED CHECKPOINT>
 This work was supported by the National Natural Science Foundation of China under Projects (Grant No. 61977045 and Grant No. 81974276).
 If you have further questions and suggestions, please feel free to contact us (gaojingsheng@sjtu.edu.cn).
 
-## License
-
-MIT License
-
