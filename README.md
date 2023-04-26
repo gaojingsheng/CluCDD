@@ -4,7 +4,7 @@
 
 ## CluCDD
 
-This includes an original implementation of CluCDD:  Contrastive Dialogue Disentanglement via Clustering
+This includes an original implementation of CluCDD:  Contrastive Dialogue Disentanglement via Clustering. The paper is accepted at IWCIM 2023.
 
 ## Get Started
 
